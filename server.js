@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 // ============================================================
 // CONFIGURATION
@@ -59,7 +59,7 @@ function ensureDataDirectory() {
           seenResults: []
         },
         null,
-        3
+        2
       )
     );
   }
