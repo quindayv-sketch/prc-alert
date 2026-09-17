@@ -2,7 +2,6 @@ const express = require("express");
 const cheerio = require("cheerio");
 const fs = require("fs");
 const path = require("path");
-const { fetchHTML } = require("./fetch-html");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,10 +16,7 @@ const PRC_RESULTS_URL =
 const PRC_SCHEDULE_URL =
   "https://www.prc.gov.ph/2026-schedule-examination";
 
-// 30s was too aggressive for a government site and is a plausible
-// reason PRC started refusing connections. Widened to 3 minutes;
-// exam results don't land with second-level precision.
-const RESULTS_CHECK_INTERVAL = 3 * 60 * 1000;   // 3 minutes
+const RESULTS_CHECK_INTERVAL = 30 * 1000;       // 30 seconds
 const SCHEDULE_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
 
 const DATA_DIR = path.join(__dirname, "data");
@@ -63,7 +59,7 @@ function ensureDataDirectory() {
           seenResults: []
         },
         null,
-        2
+        3
       )
     );
   }
@@ -305,12 +301,27 @@ function calculateReleaseProgress(examStartDate, examEndDate, targetDate) {
 
 // ============================================================
 // FETCH HTML
-//
-// Moved to ./fetch-html.js: adds a request timeout, retry with
-// backoff limited to genuinely retryable errors, and an optional
-// proxy switched on via the FETCH_PROXY env var (for testing
-// whether PRC is blocking the deploy's IP outright). See that
-// file for details and the env vars it reads.
+// ============================================================
+
+async function fetchHTML(url) {
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36",
+      "Accept":
+        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `HTTP ${response.status} ${response.statusText}`
+    );
+  }
+
+  return await response.text();
+}
+
 // ============================================================
 // PRC RESULTS PARSER
 // ============================================================
