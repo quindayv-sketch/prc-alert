@@ -1,0 +1,26 @@
+name: Test PRC Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-prc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test PRC Results Page
+        run: |
+          echo "Testing PRC connection..."
+          curl -L --max-time 30 \
+            -A "Mozilla/5.0" \
+            -o prc-test.html \
+            -w "HTTP_STATUS=%{http_code}\nDOWNLOAD_SIZE=%{size_download}\n" \
+            https://www.prc.gov.ph/articles/exam-results
+
+      - name: Check downloaded file
+        run: |
+          echo "File information:"
+          ls -lh prc-test.html
+
+          echo "Checking for PRC content:"
+          grep -i -m 5 "2026" prc-test.html || true
